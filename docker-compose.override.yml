@@ -1,4 +1,8 @@
-version: "3.7"
+networks:
+  services:
+    name: services
+    external: true
+  symfony-network:
 
 services:
   php:
@@ -14,6 +18,9 @@ services:
       - .env.local
     environment:
       - XDEBUG_MODE=${XDEBUG_MODE:-debug}
+    networks:
+      - symfony-network
+      - services
 
   caddy:
     build:
@@ -22,3 +29,12 @@ services:
     volumes:
       - ./public:/srv/app/public:ro
       - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+    networks:
+      - symfony-network
+      - services
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.symfony.rule=Host(`symfony.localhost`)"
+      - "traefik.http.routers.symfony.entrypoints=https"
+      - "traefik.http.routers.symfony.tls=true"
+      - "traefik.http.services.symfony.loadbalancer.server.port=80"
